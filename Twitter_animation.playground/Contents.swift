@@ -1,37 +1,50 @@
 import UIKit
 import PlaygroundSupport
+import QuartzCore
 
 let containerView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 375.0, height: 667.0))
+let twitterBlue = UIColor(red:0.00, green:0.67, blue:0.94, alpha:1.0)
+containerView.backgroundColor = twitterBlue
 
-let circle = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 50.0, height: 50.0))
-circle.center = containerView.center
-circle.layer.cornerRadius = 25.0
+let screenShotImageView = UIImageView(frame: containerView.frame)
+screenShotImageView.image = UIImage(named: "screenshot")
+containerView.addSubview(screenShotImageView)
 
-let startingColor = UIColor(red: (253.0/255.0), green: (159.0/255.0), blue: (47.0/255.0), alpha: 1.0)
-circle.backgroundColor = startingColor
+let mask = CALayer()
+mask.contents = UIImage(named: "twitter_logo_t")?.cgImage
+mask.bounds = CGRect(x: 0, y: 0, width: 100, height: 100)
+mask.position = CGPoint(x: screenShotImageView.frame.size.width/2, y: screenShotImageView.frame.size.height/2)
 
-containerView.addSubview(circle);
+screenShotImageView.layer.mask = mask
 
-let rectangle = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 50.0, height: 50.0))
-rectangle.center = containerView.center
-rectangle.layer.cornerRadius = 5.0
+let animation = CAKeyframeAnimation(keyPath: "bounds")
+animation.duration = 1.5
+animation.timingFunctions = [CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut)]
 
-rectangle.backgroundColor = UIColor.white
+let boundsChanges = [
+    NSValue(cgRect: mask.bounds),
+    NSValue(cgRect: CGRect(x: 0, y: 0, width: 90, height: 90)),
+    NSValue(cgRect: CGRect(x: 0, y: 0, width: 5000, height: 5000))
+]
+animation.values = boundsChanges
+animation.keyTimes = [0, 0.7, 1]
 
-containerView.addSubview(rectangle)
-
-UIView.animate(withDuration: 2.0, animations: { () -> Void in
-    let endingColor = UIColor(red: (255.0/255.0), green: (61.0/255.0), blue: (24.0/255.0), alpha: 1.0)
-    circle.backgroundColor = endingColor
+//CASpringAnimation ?
+class Delegate: NSObject, CAAnimationDelegate {
     
-    let scaleTransform = CGAffineTransform(scaleX: 5.0, y: 5.0)
-    
-    circle.transform = scaleTransform
-    
-    let rotationTransform = CGAffineTransform(rotationAngle: 3.14)
-    
-    rectangle.transform = rotationTransform
-})
+    func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
+        screenShotImageView.layer.mask = nil
+        screenShotImageView.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+        UIView.animate(withDuration: 0.5, delay: 0.05, usingSpringWithDamping: 1, initialSpringVelocity: 0.5, options: [], animations: {
+            screenShotImageView.transform = CGAffineTransform(scaleX: 1, y: 1)
+        }, completion: nil)
+    }
+}
+
+animation.delegate = Delegate()
+screenShotImageView.transform = CGAffineTransform(scaleX: 1.03, y: 1.03)
+mask.add(animation, forKey: "bounds")
 
 PlaygroundPage.current.liveView = containerView
 PlaygroundPage.current.needsIndefiniteExecution = true
+
